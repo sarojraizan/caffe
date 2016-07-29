@@ -7,7 +7,7 @@
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
 #include "caffe/filler.hpp"
-#include "caffe/layers/grn_layer.hpp"
+#include "caffe/layers/norm_layer.hpp"
 
 #include "caffe/test/test_caffe_main.hpp"
 #include "caffe/test/test_gradient_check_util.hpp"
@@ -18,11 +18,11 @@ using std::max;
 namespace caffe {
 
 template <typename TypeParam>
-class GRNLayerTest : public MultiDeviceTest<TypeParam> {
+class NormLayerTest : public MultiDeviceTest<TypeParam> {
   typedef typename TypeParam::Dtype Dtype;
 
  protected:
-  GRNLayerTest()
+  NormLayerTest()
       : epsilon_(Dtype(1e-4)),
         blob_bottom_(new Blob<Dtype>()),
         blob_top_(new Blob<Dtype>()) {}
@@ -36,8 +36,8 @@ class GRNLayerTest : public MultiDeviceTest<TypeParam> {
     blob_bottom_vec_.push_back(blob_bottom_);
     blob_top_vec_.push_back(blob_top_);
   }
-  virtual ~GRNLayerTest() { delete blob_bottom_; delete blob_top_; }
-  void ReferenceGRNForward(const Blob<Dtype>& blob_bottom,
+  virtual ~NormLayerTest() { delete blob_bottom_; delete blob_top_; }
+  void ReferenceNormForward(const Blob<Dtype>& blob_bottom,
       const LayerParameter& layer_param, Blob<Dtype>* blob_top);
 
   Dtype epsilon_;
@@ -48,7 +48,7 @@ class GRNLayerTest : public MultiDeviceTest<TypeParam> {
 };
 
 template <typename TypeParam>
-void GRNLayerTest<TypeParam>::ReferenceGRNForward(
+void NormLayerTest<TypeParam>::ReferenceNormForward(
     const Blob<Dtype>& blob_bottom, const LayerParameter& layer_param,
     Blob<Dtype>* blob_top) {
   typedef typename TypeParam::Dtype Dtype;
@@ -75,12 +75,12 @@ void GRNLayerTest<TypeParam>::ReferenceGRNForward(
   }
 }
 
-TYPED_TEST_CASE(GRNLayerTest, TestDtypesAndDevices);
+TYPED_TEST_CASE(NormLayerTest, TestDtypesAndDevices);
 
-TYPED_TEST(GRNLayerTest, TestSetupAcrossChannels) {
+TYPED_TEST(NormLayerTest, TestSetupAcrossChannels) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  GRNLayer<Dtype> layer(layer_param);
+  NormLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
   EXPECT_EQ(this->blob_top_->num(), 2);
   EXPECT_EQ(this->blob_top_->channels(), 7);
@@ -88,14 +88,14 @@ TYPED_TEST(GRNLayerTest, TestSetupAcrossChannels) {
   EXPECT_EQ(this->blob_top_->width(), 3);
 }
 
-TYPED_TEST(GRNLayerTest, TestForwardAcrossChannels) {
+TYPED_TEST(NormLayerTest, TestForwardAcrossChannels) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  GRNLayer<Dtype> layer(layer_param);
+  NormLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
   layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
   Blob<Dtype> top_reference;
-  this->ReferenceGRNForward(*(this->blob_bottom_), layer_param,
+  this->ReferenceNormForward(*(this->blob_bottom_), layer_param,
       &top_reference);
   for (int i = 0; i < this->blob_bottom_->count(); ++i) {
     EXPECT_NEAR(this->blob_top_->cpu_data()[i], top_reference.cpu_data()[i],
@@ -103,10 +103,10 @@ TYPED_TEST(GRNLayerTest, TestForwardAcrossChannels) {
   }
 }
 
-TYPED_TEST(GRNLayerTest, TestGradientAcrossChannels) {
+TYPED_TEST(NormLayerTest, TestGradientAcrossChannels) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  GRNLayer<Dtype> layer(layer_param);
+  NormLayer<Dtype> layer(layer_param);
   GradientChecker<Dtype> checker(1e-2, 1e-2);
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
   layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
