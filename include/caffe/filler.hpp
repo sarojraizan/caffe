@@ -248,13 +248,22 @@ class BilinearFiller : public Filler<Dtype> {
   virtual void Fill(Blob<Dtype>* blob) {
     CHECK_EQ(blob->num_axes(), 4) << "Blob must be 4 dim.";
     CHECK_EQ(blob->width(), blob->height()) << "Filter must be square";
+    int width = blob->width() + 1;
+    int height = blob->height() + 1;
+    int num_out = blob->num();
     Dtype* data = blob->mutable_cpu_data();
-    int f = ceil(blob->width() / 2.);
-    float c = (2 * f - 1 - f % 2) / (2. * f);
-    for (int i = 0; i < blob->count(); ++i) {
-      float x = i % blob->width();
-      float y = (i / blob->width()) % blob->height();
-      data[i] = (1 - fabs(x / f - c)) * (1 - fabs(y / f - c));
+    int f = ceil(width/ 2.);
+    //float c = (2 * f - 1 - f % 2) / (2. * f);
+    float c = 1.f;
+    for (int n = 0; n < num_out; ++n) {
+        int offset = n*(width-1)*(width-1);
+	for (int i = 0; i < width*width; ++i) {
+	   float x = i % width;
+	   float y = (i / width) % height;
+	   if (x==0||y==0) continue;
+	   int index = (y-1.f)*(width-1) + (x-1.f) + offset;
+	   data[index] = (1.f - fabs(x / f - c)) * (1.f - fabs(y / f - c));
+	}
     }
     CHECK_EQ(this->filler_param_.sparse(), -1)
          << "Sparsity not supported by this Filler.";

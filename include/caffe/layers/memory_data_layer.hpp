@@ -8,6 +8,9 @@
 #include "caffe/proto/caffe.pb.h"
 
 #include "caffe/layers/base_data_layer.hpp"
+#ifndef USE_OPENCV
+#define USE_OPENCV
+#endif
 
 namespace caffe {
 

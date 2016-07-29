@@ -145,3 +145,5 @@ center = floor(indices(2) / 2) + 1;
 crops_data(:,:,:,5) = ...
   im_data(center:center+CROPPED_DIM-1,center:center+CROPPED_DIM-1,:);
 crops_data(:,:,:,10) = crops_data(end:-1:1, :, :, 5);
+
+%crops_data = double(crops_data);

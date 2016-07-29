@@ -426,6 +426,7 @@ TYPED_TEST(ConvolutionLayerTest, TestDilated3DConvolution) {
   const Dtype* ref_top_data;
   caffe_conv(this->blob_bottom_, convolution_param, layer->blobs(),
              this->MakeReferenceTop(this->blob_top_));
+
   top_data = this->blob_top_->cpu_data();
   ref_top_data = this->ref_blob_top_->cpu_data();
   for (int i = 0; i < this->blob_top_->count(); ++i) {
