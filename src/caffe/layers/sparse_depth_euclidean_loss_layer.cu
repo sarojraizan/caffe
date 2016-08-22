@@ -21,11 +21,11 @@ __global__ void SetDiffZeroForMissingGTDepth(const int nthreads,
     Dtype* const diff_off = diff + offset;
     
     // set diff_ = 0 if groundtruth data is missing
-    // the channel in the bottom labels blob == -10.0
+    // the channel in the bottom labels blob == 0.0
     // implies that the groundtruth data is missing
     Dtype mask = label_off[0];
 
-    if (mask == Dtype(-10.0))
+    if (mask == Dtype(0.0))
         diff_off[0] = Dtype(0);
   }
 }

@@ -35,14 +35,14 @@ void SparseDepthEuclideanLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*
       diff_.mutable_cpu_data());
 
   // set diff_ = 0 if groundtruth data is missing
-  // the channel in the bottom labels blob == -10.0
+  // the channel in the bottom labels blob == 0.0
   // implies that the groundtruth data is missing
   for (int n = 0; n < num; ++n) 
   {
     for (int i = 0; i < spatial_count; ++i) 
     {
        Dtype mask = *(label + bottom[1]->offset(n) + i);	
-       if (mask == Dtype(-10.0))
+       if (mask == Dtype(0.0))
 	  *(diff + bottom[1]->offset(n) + i) = Dtype(0);
     }
   }

@@ -33,7 +33,7 @@ class SparseDepthEuclideanLossLayerTest : public MultiDeviceTest<TypeParam> {
     filler.Fill(this->blob_bottom_data_);
     filler.Fill(this->blob_bottom_label_);
 
-    // randomly set channel to -10.0 in label data
+    // randomly set channel to 0.0 in label data
     int num = this->blob_bottom_data_->num();
     int height = this->blob_bottom_data_->height();
     int width = this->blob_bottom_data_->width();
@@ -45,7 +45,7 @@ class SparseDepthEuclideanLossLayerTest : public MultiDeviceTest<TypeParam> {
         for (int i = 0; i < spatial_count; ++i)
         {
     	   if (!(caffe_rng_rand() % 2)) 
-             *(label + this->blob_bottom_label_->offset(n) + i) = Dtype(-10.0);
+             *(label + this->blob_bottom_label_->offset(n) + i) = Dtype(0.0);
         }
     }
 
@@ -82,7 +82,7 @@ class SparseDepthEuclideanLossLayerTest : public MultiDeviceTest<TypeParam> {
       for (int i = 0; i < spatial_count; ++i) 
       {
         Dtype mask = *(label + this->blob_bottom_label_->offset(n) + i);
-        if (mask != Dtype(-10.0))
+        if (mask != Dtype(0.0))
         {
             Dtype diff = *(bottom_data + this->blob_bottom_data_->offset(n) + i) - 
                          *(label + this->blob_bottom_label_->offset(n) + i);
