@@ -306,7 +306,7 @@ message ParamSpec {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available layer-specific ID: 148 (last added: unpooling_param)
+// LayerParameter next available layer-specific ID: 149 (last added: TReLU)
 
 message LayerParameter {
   optional string name = 1; // the layer name
@@ -403,6 +403,7 @@ message LayerParameter {
   optional TanHParameter tanh_param = 127;
   optional ThresholdParameter threshold_param = 128;
   optional TileParameter tile_param = 138;
+  optional TReLUParameter trelu_param = 148;
   optional UnpoolingParameter unpooling_param = 147;
   optional WindowDataParameter window_data_param = 129;
 }
@@ -664,6 +665,7 @@ message DataParameter {
 
 message DropoutParameter {
   optional float dropout_ratio = 1 [default = 0.5]; // dropout ratio
+  optional bool sample_weights_test = 2 [default = false]; // Sample weights for testing or use the mean 
 }
 
 // DummyDataLayer fills any number of arbitrarily shaped blobs with random
@@ -998,6 +1000,19 @@ message ReLUParameter {
     CUDNN = 2;
   }
   optional Engine engine = 2 [default = DEFAULT];
+}
+
+// Message that stores parameters used by TruncatedReLULayer
+message TReLUParameter {
+  optional float negative_slope = 1 [default = 0];
+  enum Engine {
+    DEFAULT = 0;
+    CAFFE = 1;
+    CUDNN = 2;
+  }
+  optional Engine engine = 2 [default = DEFAULT];
+  required float ub = 3;
+  required float lb = 4;
 }
 
 message ReshapeParameter {
