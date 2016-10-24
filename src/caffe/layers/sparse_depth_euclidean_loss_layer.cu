@@ -26,7 +26,29 @@ __global__ void SetDiffZeroForMissingGTDepth(const int nthreads,
     Dtype mask = label_off[0];
 
     if (mask == Dtype(0.0))
-        diff_off[0] = Dtype(0);
+        diff_off[0] = Dtype(0.0);
+  }
+}
+
+template <typename Dtype>
+__global__ void ComputeLogDepths(const int nthreads,
+    const Dtype* const label, const int num, 
+    const int height, const int width, Dtype* const logdepths) {
+  CUDA_KERNEL_LOOP(index, nthreads) {
+    // find out the local offset
+    const int w = index % width;
+    const int h = (index / width) % height;
+    const int n = index / width / height;
+    const int offset = (n * height + h) * width + w;
+    const Dtype* const label_off = label + offset;
+    Dtype* const logdepths_off = logdepths + offset;
+    
+    Dtype mask = label_off[0];
+
+    if (mask != Dtype(0.0))
+        logdepths_off[0] = log(mask)/Dtype(0.45723134);
+    else
+        logdepths_off[0] = Dtype(0.0);
   }
 }
 
@@ -38,15 +60,19 @@ void SparseDepthEuclideanLossLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*
   int height = bottom[0]->height();
   int width = bottom[0]->width();
 
+  int n_threads = num * height * width;
+  ComputeLogDepths<<<CAFFE_GET_BLOCKS(n_threads), CAFFE_CUDA_NUM_THREADS>>>(
+      n_threads, bottom[1]->gpu_data(), num, height, width, logdepths_.mutable_gpu_data());
+
   caffe_gpu_sub(
       count,
       bottom[0]->gpu_data(),
-      bottom[1]->gpu_data(),
+      logdepths_.gpu_data(),
       diff_.mutable_gpu_data());
 
   // set diff_ = 0 if groundtruth data is missing (parallelized on gpu)
   // Note: the bottom[1] blob should contain the groundtruth labels
-  int n_threads = num * height * width;
+
   // NOLINT_NEXT_LINE(whitespace/operators)
   SetDiffZeroForMissingGTDepth<<<CAFFE_GET_BLOCKS(n_threads), CAFFE_CUDA_NUM_THREADS>>>(
       n_threads, bottom[1]->gpu_data(), num, height, width, diff_.mutable_gpu_data());

@@ -14,6 +14,7 @@ void SparseDepthEuclideanLossLayer<Dtype>::Reshape(
   CHECK_EQ(bottom[0]->count(1), bottom[1]->count(1))
       << "Inputs must have the same dimension.";
   diff_.ReshapeLike(*bottom[0]);
+  logdepths_.ReshapeLike(*bottom[0]);
 }
 
 template <typename Dtype>
@@ -27,11 +28,24 @@ void SparseDepthEuclideanLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*
   const Dtype* bottom_data = bottom[0]->cpu_data();
   const Dtype* label = bottom[1]->cpu_data();
   Dtype* diff = diff_.mutable_cpu_data();  
+  Dtype* logdepths = logdepths_.mutable_cpu_data(); 
+
+  for (int n = 0; n < num; ++n) 
+  {
+    for (int i = 0; i < spatial_count; ++i) 
+    {
+       Dtype mask = *(label + bottom[1]->offset(n) + i);	
+       if (mask != Dtype(0.0))
+	  *(logdepths + bottom[1]->offset(n) + i) = log(mask)/Dtype(0.45723134);
+       else
+          *(logdepths + bottom[1]->offset(n) + i) = Dtype(0.0);
+    }
+  }
 
   caffe_sub(
       count,
       bottom_data,
-      label,
+      logdepths,
       diff_.mutable_cpu_data());
 
   // set diff_ = 0 if groundtruth data is missing
@@ -43,12 +57,12 @@ void SparseDepthEuclideanLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*
     {
        Dtype mask = *(label + bottom[1]->offset(n) + i);	
        if (mask == Dtype(0.0))
-	  *(diff + bottom[1]->offset(n) + i) = Dtype(0);
+	  *(diff + bottom[1]->offset(n) + i) = Dtype(0.0);
     }
   }
 
   Dtype dot = caffe_cpu_dot(count, diff_.cpu_data(), diff_.cpu_data());
-  Dtype loss = dot / bottom[0]->num() / Dtype(2);
+  Dtype loss = dot / bottom[0]->num() / Dtype(2.0);
   top[0]->mutable_cpu_data()[0] = loss;
 }
 

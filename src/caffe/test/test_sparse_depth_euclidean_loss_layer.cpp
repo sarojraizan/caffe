@@ -84,8 +84,8 @@ class SparseDepthEuclideanLossLayerTest : public MultiDeviceTest<TypeParam> {
         Dtype mask = *(label + this->blob_bottom_label_->offset(n) + i);
         if (mask != Dtype(0.0))
         {
-            Dtype diff = *(bottom_data + this->blob_bottom_data_->offset(n) + i) - 
-                         *(label + this->blob_bottom_label_->offset(n) + i);
+            const Dtype label_ = *(label + this->blob_bottom_label_->offset(n) + i);
+            Dtype diff = *(bottom_data + this->blob_bottom_data_->offset(n) + i) - log(label_)/0.45723134;
             dot += diff*diff;
         }
       }
