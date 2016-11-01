@@ -83,11 +83,12 @@ void SparseCanonicalGaussianLossLayer<Dtype>::Forward_cpu(
 		   y_n[i] = bottom[1]->cpu_data()[offset2 + i*spatial_count];
 		}
 
-		UtU_n = U_n.transpose()*U_n;	
+		UtU_n = U_n.transpose()*U_n;
+	
 	        // compute log determinent of UtU_n
 		Dtype UtU_n_log_det(0.0);
 	        for (size_t i = 0; i < channels; ++i) 
-		   UtU_n_log_det += log(UtU_n(i,i));
+		   UtU_n_log_det += Dtype(2.0)*log(U_n(i,i));
 		loss += -theta_n.transpose()*y_n + Dtype(0.5)*(y_n.transpose()*UtU_n*y_n - 
                                                    UtU_n_log_det + 
                                                    theta_n.transpose()*UtU_n.inverse()*theta_n + 

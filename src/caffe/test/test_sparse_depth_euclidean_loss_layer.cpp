@@ -74,9 +74,14 @@ class SparseDepthEuclideanLossLayerTest : public MultiDeviceTest<TypeParam> {
     int spatial_count = height * width;
     const Dtype* label = this->blob_bottom_label_->cpu_data();
     const Dtype* bottom_data = this->blob_bottom_data_->cpu_data();
-    Dtype dot(0);
-    
-    // compute dot product if groundtruth data is present
+    Dtype dot(0.0);
+    Dtype diff_sum(0.0);
+    Dtype ddiff_x2_sum(0.0);
+    Dtype ddiff_y2_sum(0.0);
+    Blob<Dtype>* diff_ = new Blob<Dtype>(num, 1, height, width);   
+    Dtype *diff = diff_->mutable_cpu_data();
+
+    // compute diff only if groundtruth data is present
     for (int n = 0; n < num; ++n) 
     {
       for (int i = 0; i < spatial_count; ++i) 
@@ -85,17 +90,42 @@ class SparseDepthEuclideanLossLayerTest : public MultiDeviceTest<TypeParam> {
         if (mask != Dtype(0.0))
         {
             const Dtype label_ = *(label + this->blob_bottom_label_->offset(n) + i);
-            Dtype diff = *(bottom_data + this->blob_bottom_data_->offset(n) + i) - log(label_)/0.45723134;
-            dot += diff*diff;
+            Dtype diff_tmp = *(bottom_data + this->blob_bottom_data_->offset(n) + i) - log(label_)/0.45723134;
+            *(diff + this->blob_bottom_data_->offset(n) + i) = diff_tmp;
+            dot += diff_tmp*diff_tmp;
+            diff_sum += diff_tmp;
+        }
+        else *(diff + this->blob_bottom_data_->offset(n) + i) = Dtype(0.0);
+      }
+    }
+
+    for (int n = 0; n < num; ++n) 
+    {
+      for (int i = 0; i < spatial_count; ++i) 
+      {
+        if (i%width != (width - 1))
+        {
+           Dtype diff_tmp = *(diff + blob_bottom_data_->offset(n) + i + 1) - *(diff + blob_bottom_data_->offset(n) + i);
+           ddiff_x2_sum += diff_tmp*diff_tmp;
+        }
+        if (i < (height-1)*width) 
+        {
+           Dtype diff_tmp = *(diff + blob_bottom_data_->offset(n) + i + width) - *(diff + blob_bottom_data_->offset(n) + i);
+           ddiff_y2_sum += diff_tmp*diff_tmp;
         }
       }
     }
 
     // compute loss
-    Dtype loss = dot / num / Dtype(2);
+    Dtype N = blob_bottom_data_->num();
+    Dtype loss = dot / N 
+                 + ddiff_x2_sum / N 
+                 + ddiff_y2_sum / N
+                 - diff_sum*diff_sum / (Dtype(2.0)*N*N)
+                 ;
 
     // check sparse euclidean loss
-    EXPECT_NEAR(this->blob_top_loss_->cpu_data()[0], loss, 1e-4);
+    EXPECT_NEAR(this->blob_top_loss_->cpu_data()[0], loss, 1e-3);
   }
 
   Blob<Dtype>* const blob_bottom_data_;
@@ -116,7 +146,7 @@ TYPED_TEST(SparseDepthEuclideanLossLayerTest, TestGradient) {
   LayerParameter layer_param;
   SparseDepthEuclideanLossLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
-  GradientChecker<Dtype> checker(1e-2, 1e-2, 1701);
+  GradientChecker<Dtype> checker(2e-2, 2e-2, 1701);
   // check loss derivative with respect to first blob in bottom vector 
   // (we expect the groundtruth data to be always the second blob!)
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,

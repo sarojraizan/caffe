@@ -6,9 +6,10 @@
 #include "caffe/util/io.hpp"
 #include "caffe/util/math_functions.hpp"
 
-namespace caffe {
+#define EPS 0.0
+#define MASK_VAL -1e5
 
-const double EPS = 1e-6;
+namespace caffe {
 
 template <typename Dtype>
 void SparseDepthMahalanobisLossLayer<Dtype>::LayerSetUp(
@@ -24,11 +25,8 @@ void SparseDepthMahalanobisLossLayer<Dtype>::Reshape(
   diff_.ReshapeLike(*bottom[0]);
 
   if (bottom.size() >= 3) {
-    CHECK_EQ(top.size(), 2);
     Udiff_.ReshapeLike(diff_);
     UtUdiff_.ReshapeLike(diff_);
-    // setup second top blob, regularization
-    top[1]->ReshapeLike(*top[0]);
   }
 }
 
@@ -59,7 +57,7 @@ void SparseDepthMahalanobisLossLayer<Dtype>::Forward_cpu(
     for (int i = 0; i < spatial_count; ++i) 
     {
        Dtype mask = *(label + bottom[1]->offset(n) + i);
-       if (mask == Dtype(-10.0))
+       if (mask == Dtype(MASK_VAL))
        { 
 	  *(diff + bottom[1]->offset(n) + i) = Dtype(0);
        }
@@ -78,8 +76,8 @@ void SparseDepthMahalanobisLossLayer<Dtype>::Forward_cpu(
           for (int w = 0; w < width; ++w) 
           {
               int offset = n*spatial_count + h*width + w;
- 	      Dtype mask2 = *(label + bottom[1]->offset(n,0,h,w));
-	      if (mask2 == Dtype(-10.0))
+ 	      Dtype mask = *(label + bottom[1]->offset(n,0,h,w));
+	      if (mask == Dtype(MASK_VAL))
 	      { 
 		  U = Dtype(1.0);
 	      }
@@ -92,7 +90,7 @@ void SparseDepthMahalanobisLossLayer<Dtype>::Forward_cpu(
 	      UtUdiff_.mutable_cpu_data()[offset] = U*Udiff_.cpu_data()[offset];
 
 	      // compute regularizer
-	      reg += log(U + EPS);
+	      reg += log(U + Dtype(EPS));
 	  } //for w
        } //for h
     } //for n
@@ -100,8 +98,7 @@ void SparseDepthMahalanobisLossLayer<Dtype>::Forward_cpu(
     // difftUtUdiff
     Dtype dot = caffe_cpu_dot(count, diff_.cpu_data(), UtUdiff_.cpu_data());
     Dtype loss = dot / bottom[0]->num() / Dtype(2);
-    top[0]->mutable_cpu_data()[0] = loss;
-    top[1]->mutable_cpu_data()[0] = Dtype(-1.0) * reg / bottom[0]->num();
+    top[0]->mutable_cpu_data()[0] = loss - reg / bottom[0]->num();
   } else {  // unweighted distance
     Dtype dot = caffe_cpu_dot(count, diff_.cpu_data(), diff_.cpu_data());
     Dtype loss = dot / bottom[0]->num() / Dtype(2);
@@ -155,16 +152,16 @@ void SparseDepthMahalanobisLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtyp
               
               // the diagonal elements contribute to the regularizer and have an abs
               // non linearity
-              Dtype d_reg = top[1]->cpu_diff()[0] / bottom[0]->num();
+              Dtype d_reg = top[0]->cpu_diff()[0] / bottom[0]->num();
 
-              d_reg *= Dtype(-1) / (fabs(bottom[2]->cpu_data()[offset]) + EPS);
+              d_reg *= Dtype(-1) / (fabs(bottom[2]->cpu_data()[offset]) + Dtype(EPS));
               if (bottom[2]->cpu_data()[offset] < 0) 
               {
                  d_loss *= -1;
                  d_reg *= -1;
               }
 
-	      if (mask == Dtype(-10.0))
+	      if (mask == Dtype(MASK_VAL))
 	      { 
 		  bottom[2]->mutable_cpu_diff()[offset] = Dtype(0);
 	      }

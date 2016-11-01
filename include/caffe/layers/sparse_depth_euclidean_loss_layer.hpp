@@ -96,7 +96,11 @@ class SparseDepthEuclideanLossLayer : public LossLayer<Dtype> {
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
 
   Blob<Dtype> diff_;
+  Blob<Dtype> ddiff_x_;
+  Blob<Dtype> ddiff_y_;
   Blob<Dtype> logdepths_;
+  Blob<Dtype> ones_;
+  Dtype diff_sum;
 };
 
 

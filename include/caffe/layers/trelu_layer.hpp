@@ -12,7 +12,7 @@
 namespace caffe {
 
 /**
- * @brief Rectified Linear Unit non-linearity @f$ y = \min(ub,\max(lb, x)) @f$.
+ * @brief Truncated Rectified Linear Unit non-linearity @f$ y = \min(ub,\max(lb, x)) @f$.
  */
 template <typename Dtype>
 class TReLULayer : public NeuronLayer<Dtype> {

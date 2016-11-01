@@ -6,15 +6,15 @@
 namespace caffe {
 
 template <typename Dtype>
-__global__ void TReLUForward(const int n, const Dtype* in, Dtype* out,
+__global__ void TReLUForward(const int n, const Dtype* bottom_data, Dtype* top_data,
     Dtype lb, Dtype ub) {
   CUDA_KERNEL_LOOP(index, n) {
-    if (in[index] < lb)
-	out[index] = lb;
-    else if(in[index] > ub)
-	out[index] = ub;
+    if (bottom_data[index] < lb)
+	top_data[index] = lb;
+    else if(bottom_data[index] > ub)
+	top_data[index] = ub;
     else 
-        out[index] = in[index];
+        top_data[index] = bottom_data[index];
   }
 }
 
@@ -39,10 +39,11 @@ void TReLULayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
 }
 
 template <typename Dtype>
-__global__ void TReLUBackward(const int n, const Dtype* in_diff,
-    const Dtype* in_data, Dtype* out_diff, Dtype lb, Dtype ub) {
+__global__ void TReLUBackward(const int n, const Dtype* top_diff,
+    const Dtype* bottom_data, Dtype* bottom_diff, Dtype lb, Dtype ub) {
   CUDA_KERNEL_LOOP(index, n) {
-    out_diff[index] = in_diff[index] * (in_data[index] > lb && in_data[index] < ub);
+    if (bottom_data[index] > lb && bottom_data[index] < ub) bottom_diff[index] = top_diff[index];
+    else bottom_diff[index] = Dtype(0.0);
   }
 }
 

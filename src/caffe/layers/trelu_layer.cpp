@@ -32,7 +32,9 @@ void TReLULayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     Dtype lb = this->layer_param_.trelu_param().lb();
 
     for (int i = 0; i < count; ++i) {
-      bottom_diff[i] = top_diff[i] * (bottom_data[i] > lb && bottom_data[i] < ub);
+      if (bottom_data[i] > lb && bottom_data[i] < ub) bottom_diff[i] = top_diff[i];
+      else bottom_diff[i] = Dtype(0.0);
+      
     }
   }
 }
@@ -43,5 +45,5 @@ STUB_GPU(TReLULayer);
 #endif
 
 INSTANTIATE_CLASS(TReLULayer);
-
+REGISTER_LAYER_CLASS(TReLU);
 }  // namespace caffe
