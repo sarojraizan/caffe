@@ -166,11 +166,11 @@ void SparseCanonicalGaussianLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dty
                 UtU_inv_n = UtU_n.inverse();	
                 
                 d_loss_U_n = alpha*Dtype(0.5)*(Dtype(2.0)*U_n*y_n*y_n.transpose() - 
-                                         Dtype(2.0)*U_inv_n.transpose() - 
-                                         UtU_inv_n*theta_n*theta_n.transpose()*UtU_inv_n*(U_n + U_n.transpose()));  
+                                               Dtype(2.0)*U_inv_n.transpose() - 
+                                               UtU_inv_n*theta_n*theta_n.transpose()*UtU_inv_n*(U_n + U_n.transpose()));  
   
-		d_loss_theta_n = alpha*UtU_inv_n*theta_n - y_n;
-		                
+		d_loss_theta_n = alpha*Dtype(0.5)*(UtU_inv_n*theta_n - y_n);
+		ii = 0;              
 		for (size_t i = 0; i < channels; ++i) 
 		{
 		   for (size_t j = i; j < channels; ++j) 
@@ -187,7 +187,7 @@ void SparseCanonicalGaussianLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dty
             }
             else {
 
-		int ii = 0;
+        	int ii = 0;
 	  	int offset1 = n*bottom[2]->channels()*spatial_count + h*width + w;
 		int offset2 = n*channels*spatial_count + h*width + w;
 
@@ -204,6 +204,7 @@ void SparseCanonicalGaussianLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dty
 		{
 		   bottom[0]->mutable_cpu_diff()[offset2 + i*spatial_count] = Dtype(0.0);	
 		}
+
             }
            } // for w 
         } // for h

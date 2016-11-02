@@ -63,6 +63,7 @@ void SparseMahalanobisLossLayer<Dtype>::Forward_cpu(
        for (int c = 0; c < channels; ++c) {
 	   mask = *(label + bottom[1]->offset(n,c) + i) + mask;	
        }
+       mask /=bottom[0]	->channels();
        if (mask == Dtype(MASK_VAL))
        { 
            for (int c = 0; c < channels; ++c) 
@@ -86,7 +87,7 @@ void SparseMahalanobisLossLayer<Dtype>::Forward_cpu(
               {
 	          mask = *(label + bottom[1]->offset(n,c,h,w)) + mask;	
               }
-
+              mask /= bottom[0]->channels();
 	      // pack the upper-triangular weight matrix (Cholesky factor of information
 	      // matrix)
 	      int ii = 0;
@@ -198,6 +199,7 @@ void SparseMahalanobisLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>&
 	          mask = *(label + bottom[1]->offset(n,c,h,w)) + mask;	
               }
 
+              mask /= bottom[0]->channels();
               int offset1 = n*dim*spatial_count + h*width + w;
 	      int offset2 = n*bottom[2]->channels()*spatial_count + h*width + w;
   	      Blob<Dtype> diff_tmp(1, 1, 1, dim);

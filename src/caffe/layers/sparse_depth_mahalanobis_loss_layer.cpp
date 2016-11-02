@@ -6,8 +6,8 @@
 #include "caffe/util/io.hpp"
 #include "caffe/util/math_functions.hpp"
 
-#define EPS 0.0
-#define MASK_VAL -1e5
+#define EPS 0
+#define MASK_VAL -10.0
 
 namespace caffe {
 

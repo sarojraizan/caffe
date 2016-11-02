@@ -92,7 +92,7 @@ void SparseDepthEuclideanLossLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*
         else *(ddiff_y + bottom[1]->offset(n) + i) = Dtype(0.0);
     }
   }
-  Dtype N = bottom[0]->num();
+  Dtype N = bottom[0]->count();
   Dtype loss = dot / N 
                + ddiff_x2_sum / N
                + ddiff_y2_sum / N
@@ -106,7 +106,6 @@ void SparseDepthEuclideanLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>
     const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {
 
    if (propagate_down[0]) {
-     int count = bottom[0]->count();
      int num = bottom[0]->num();
      int height = bottom[0]->height();
      int width = bottom[0]->width();
@@ -117,7 +116,7 @@ void SparseDepthEuclideanLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>
      const Dtype* ddiff_y = ddiff_y_.cpu_data();
      Dtype* bottom_diff = bottom[0]->mutable_cpu_diff(); 
      Dtype top_diff_val = top[0]->cpu_diff()[0];
-     Dtype N = bottom[0]->num();
+     Dtype N = bottom[0]->count();
 
      for (int n = 0; n < num; ++n) 
      {

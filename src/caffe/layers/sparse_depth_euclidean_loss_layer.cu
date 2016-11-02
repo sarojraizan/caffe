@@ -151,7 +151,7 @@ void SparseDepthEuclideanLossLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*
   caffe_gpu_dot(count, ddiff_x_.gpu_data(), ddiff_x_.gpu_data(), &ddiff_x2_sum);
   caffe_gpu_dot(count, ddiff_y_.gpu_data(), ddiff_y_.gpu_data(), &ddiff_y2_sum);
 
-  Dtype N = bottom[0]->num();
+  Dtype N = bottom[0]->count();
   Dtype loss = dot / N          
                + ddiff_x2_sum / N 
                + ddiff_y2_sum / N
@@ -172,7 +172,7 @@ void SparseDepthEuclideanLossLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>
      int width = bottom[0]->width();
 
      int n_threads = num * height * width;
-     Dtype N = bottom[0]->num();
+     Dtype N = bottom[0]->count();
      Dtype top_diff_val = top[0]->cpu_diff()[0];
 
      caffe_gpu_axpby(

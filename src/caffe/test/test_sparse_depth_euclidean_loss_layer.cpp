@@ -117,7 +117,7 @@ class SparseDepthEuclideanLossLayerTest : public MultiDeviceTest<TypeParam> {
     }
 
     // compute loss
-    Dtype N = blob_bottom_data_->num();
+    Dtype N = blob_bottom_data_->count();
     Dtype loss = dot / N 
                  + ddiff_x2_sum / N 
                  + ddiff_y2_sum / N
